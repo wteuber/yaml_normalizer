@@ -12,37 +12,29 @@ module YamlNormalizer
     class IsYaml < Base
       include Helpers::Normalize
 
-      # file is the file path String to be regarded
-      attr_reader :file
-
-      # Create an IsYaml service object by calling .new and passing a file path
-      # String.
-      # @param file [String] file path to be regarded
-      def initialize(file)
-        @file = file.to_s
-      end
-
       # Return true if given file is a valid YAML file
-      def call
+      # @param file [String] file path to be regarded
+      def call(file)
+        @file = file.to_s
         file? && parseable? && !scalar?
       end
 
       private
 
       def file?
-        File.file? file
+        File.file? @file
       end
 
       # The current implementation does not require parseable? to return a
       # boolean value
       def parseable?
-        parse(read(file))
+        parse(read(@file))
       rescue Psych::SyntaxError
         false
       end
 
       def scalar?
-        Psych.load_file(file).instance_of? String
+        Psych.load_file(@file).instance_of? String
       end
     end
   end

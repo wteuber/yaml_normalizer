@@ -5,8 +5,7 @@ require 'spec_helper'
 # rubocop:disable Metrics/BlockLength
 RSpec.describe YamlNormalizer::Ext::Nested do
   context 'extended Hash instances with "nested"' do
-    subject { hash.extend(described_module).nested }
-    let(:described_module) { described_class }
+    subject { hash.extend(described_class).nested }
     let(:hash) do
       { 'a.b.c' => 1, 'b.x' => 2,
         'b.y.one' => true,
@@ -31,6 +30,21 @@ RSpec.describe YamlNormalizer::Ext::Nested do
 
     it 'resets the default_proc' do
       expect(subject[:unknown]).to be_nil
+    end
+  end
+
+  describe '.to_proc' do
+    subject { described_class.to_proc.call(hash) }
+    let(:hash) { { 'a.b.c' => 1, 'b.x' => 2, 'b.y.ok' => true, 'b.z' => 4 } }
+    let(:expected) do
+      { 'a' => { 'b' => { 'c' => 1 } },
+        'b' => { 'x' => 2,
+                 'y' => { 'ok' => true },
+                 'z' => 4 } }
+    end
+
+    it 'provides a function that extends a hash and calls "nested"' do
+      expect(subject.inspect).to eql(expected.inspect)
     end
   end
 

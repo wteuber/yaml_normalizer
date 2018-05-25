@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rake', '~> 12.0'
 
   spec.add_development_dependency 'awesome_print'
+  spec.add_development_dependency 'benchmark-ips'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'flog'
   spec.add_development_dependency 'github-markup'

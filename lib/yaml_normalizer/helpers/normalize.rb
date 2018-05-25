@@ -22,12 +22,16 @@ module YamlNormalizer
       # @param [String] valid YAML string
       # @return [String] normalized YAML string
       def normalize_yaml(yaml)
-        hashes = parse(yaml).transform
-        hashes.each { |hash| hash.extend(Ext::SortByKey) }
-        hashes.map(&:sort_by_key).map(&:to_yaml).join
+        hashes = parse(yaml).to_ruby
+        hashes.map(&Ext::SortByKey).map(&:to_yaml).join
       end
 
       private
+
+      def sanitize_files(globs)
+        files = globs.each_with_object([]) { |a, o| o << Dir[a.to_s] }
+        files.flatten.sort.uniq
+      end
 
       def parse(yaml)
         Psych.parse_stream(yaml)

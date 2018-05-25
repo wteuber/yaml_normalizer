@@ -5,8 +5,7 @@ require 'spec_helper'
 # rubocop:disable Metrics/BlockLength
 RSpec.describe YamlNormalizer::Ext::SortByKey do
   context 'extended Hash instances with "sort_by_key"' do
-    subject { hash.extend(described_module).sort_by_key(recursive) }
-    let(:described_module) { described_class }
+    subject { hash.extend(described_class).sort_by_key(recursive) }
     let(:recursive) { true }
     let(:hash) { { b: { z: 20, x: 10, y: { b: 1, a: 2 } }, a: nil } }
     let(:expected) { { a: nil, b: { x: 10, y: { a: 2, b: 1 }, z: 20 } } }
@@ -26,6 +25,7 @@ RSpec.describe YamlNormalizer::Ext::SortByKey do
     context 'first level only' do
       let(:recursive) { false }
       let(:expected) { { a: nil, b: { z: 20, x: 10, y: { b: 1, a: 2 } } } }
+
       it 'sorts first level keys only' do
         expect(subject.inspect).to eql(expected.inspect)
       end
@@ -35,6 +35,16 @@ RSpec.describe YamlNormalizer::Ext::SortByKey do
       it 'sorts keys of all levels' do
         expect(subject.inspect).to eql(expected.inspect)
       end
+    end
+  end
+
+  describe '.to_proc' do
+    subject { described_class.to_proc.call(hash) }
+    let(:hash) { { 'b.z' => 20, 'b.x' => 10, 'a' => nil } }
+    let(:expected) { { 'a' => nil, 'b.x' => 10, 'b.z' => 20 } }
+
+    it 'provides a function that extends a hash and calls "sort_by_key"' do
+      expect(subject.inspect).to eql(expected.inspect)
     end
   end
 

@@ -12,20 +12,13 @@ module YamlNormalizer
     class Normalize < Base
       include Helpers::Normalize
 
-      # files is a sorted array of file path Strings
-      attr_reader :files
-
-      # Create a Normalize service object by calling .new and passing one or
-      # more String that are interpreted as file glob pattern.
+      # Normalizes all YAML files set on instantiation.
       # @param *args [Array<String>] a list of file glob patterns
-      def initialize(*args)
-        files = args.each_with_object([]) { |a, o| o << Dir[a.to_s] }
-        @files = files.flatten.sort.uniq
-      end
-
-      # Normalizes all YAML files defined on instantiation.
-      def call
-        files.peach { |file| process(file) }
+      def call(*args)
+        normalize = method(:process)
+        files = sanitize_files(args)
+        $stderr.print "#{args} does not match any files\n" if files.empty?
+        files.peach(&normalize)
       end
 
       private
@@ -34,7 +27,7 @@ module YamlNormalizer
         if IsYaml.call(file)
           normalize!(file)
         else
-          $stderr.print "#{file} not a YAML file\n"
+          $stderr.print "#{file} is not a YAML file\n"
         end
       end
 
@@ -48,16 +41,12 @@ module YamlNormalizer
         end
       end
 
+      # Returns true if the hashes resulting from parsing both input YAML
+      # strings are equal and returns false otherwise.
       def stable?(yaml_a, yaml_b)
-        convert(yaml_a).each_with_index.all? do |a, i|
-          a.namespaced.eql?(convert(yaml_b).fetch(i).namespaced)
-        end
-      end
-
-      def convert(yaml)
-        ary = Psych.parse_stream(yaml).transform
-        ary.each { |hash| hash.extend(Ext::Namespaced) }
-        ary
+        hash_a = Psych.parse_stream(yaml_a).to_ruby
+        hash_b = Psych.parse_stream(yaml_b).to_ruby
+        hash_a.eql?(hash_b)
       end
     end
   end

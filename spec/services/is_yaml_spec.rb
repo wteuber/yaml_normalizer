@@ -3,8 +3,12 @@
 require 'spec_helper'
 
 RSpec.describe YamlNormalizer::Services::IsYaml do
+  it 'inherits from YamlNormalizer::Services::Base' do
+    expect(described_class).to be < YamlNormalizer::Services::Base
+  end
+
   describe '#call' do
-    subject { described_class.new(file).call }
+    subject { described_class.call(file) }
 
     let(:path) { "#{SpecConfig.data_path}#{File::SEPARATOR}" }
 

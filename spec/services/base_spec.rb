@@ -4,36 +4,40 @@ require 'spec_helper'
 
 # rubocop:disable Metrics/BlockLength
 RSpec.describe YamlNormalizer::Services::Base do
-  subject { described_class }
-  let(:args) { [:foo, 'bar', 842] }
+  let(:child) { Class.new(described_class) { define_method(:call) { |*_| } } }
+  let(:dummy) { double('Child', call: nil) }
+  let(:args) { [:foo, 'bar', 842, [], {}].sample(rand(1..5)) }
 
   describe '.new' do
-    it 'accepts arbitrary arguments' do
-      instance = subject.new(*args)
-      expect(instance.instance_variable_get(:@args)).to eql(args)
-    end
+    subject { child.new }
+    it { expect { subject }.to raise_error(NoMethodError) }
   end
 
   describe '.call' do
-    let(:args) { [:foo, 'bar', 842] }
-    let(:instance) { double('SubClassOfBase', call: nil) }
+    subject { child.call(*args) }
 
-    it 'creates an instance and passes all arguments' do
-      expect(subject).to receive(:new).with(*args).and_return(instance)
-      subject.call(*args)
+    context 'when #call is not implemented' do
+      subject { described_class.call(*args) }
+
+      it 'accepts arbitrary parameters' do
+        expect { subject }.to raise_error(NotImplementedError)
+          .with_message(args.inspect)
+      end
+
+      it 'calls instance method "call" with args' do
+        expect_any_instance_of(described_class).to receive(:call).with(*args)
+        subject
+      end
     end
 
-    it 'calls method "call" on instance' do
-      allow(subject).to receive(:new).with(*args).and_return(instance)
-      expect(instance).to receive(:call)
-      subject.call(*args)
+    it 'instantiates child class without arguments' do
+      expect(child).to receive(:new).with(no_args).and_return(dummy)
+      subject
     end
-  end
 
-  describe '#call' do
-    subject { described_class.new }
-    it 'raises NotImplementedError' do
-      expect { subject.call }.to raise_error(NotImplementedError)
+    it 'calls instance method "call" with args' do
+      expect_any_instance_of(child).to receive(:call).with(*args)
+      subject
     end
   end
 end

@@ -7,6 +7,22 @@ module YamlNormalizer
     # The approach of extending Hash instances avoids monkey-patching a Ruby
     # Core class and using refinements.
     module Nested
+      # Provides a *Proc* for a functional programming approach. It allows to
+      # pass *Nested* as block argument using ampersand syntax.
+      # @example
+      #   hash = {'a.b.c' => 1, 'b.x' => 2, 'b.y.ok' => true, 'b.z' => 4}
+      #   YamlNormalizer::Ext::Nested.to_proc.call(hash)
+      #   => {"a"=>{"b"=>{"c"=>1}}, "b"=>{"x"=>2, "y"=>{"ok"=>true}, "z"=>4}}
+      #
+      #   hashes = [{'a.b.c' => 1}, {'b.x' => 2, 'b.y.ok' => true}]
+      #   hashes.map(&YamlNormalizer::Ext::Nested)
+      #   => [{"a"=>{"b"=>{"c"=>1}}}, {"b"=>{"x"=>2, "y"=>{"ok"=>true}}}]
+      #
+      # @return [Proc] a function to be used
+      def self.to_proc
+        ->(hash) { hash.extend(self).nested }
+      end
+
       # Transforms a flat key-value pair *Hash* into a tree-shaped *Hash*,
       # assuming tree levels are separated by a dot.
       # *nested* does not modify the instance of *Hash* it's called on.
@@ -15,6 +31,7 @@ module YamlNormalizer
       #   hash.extend(YamlNormalizer::Ext::Nested)
       #   hash.nested
       #   => {"a"=>{"b"=>{"c"=>1}}, "b"=>{"x"=>2, "y"=>{"ok"=>true}, "z"=>4}}
+      #
       # @return [Hash] tree-shaped Hash
       def nested
         tree = Hash.new { |h, k| h[k] = Hash.new(&h.default_proc) }
